@@ -32,3 +32,5 @@ go.work.sum
 # .vscode/
 
 atcoderproblems-cli
+# Added by goreleaser init:
+dist/
