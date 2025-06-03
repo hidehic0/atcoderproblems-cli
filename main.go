@@ -9,8 +9,11 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
+
+var RedString = color.New(color.FgRed).Add(color.Bold)
 
 type AcCountData struct {
 	Count int `json:"count"`
@@ -34,7 +37,8 @@ func getAcCount(username string) AcCountData {
 
 	var data AcCountData
 	if err := json.Unmarshal(body, &data); err != nil {
-		fmt.Println("User not found")
+		RedString.Println("User not found")
+		data.Count = -1
 	}
 
 	return data
@@ -62,7 +66,7 @@ func getRatedPointSum(username string) RatedPointSumData {
 
 	var data RatedPointSumData
 	if err := json.Unmarshal(body, &data); err != nil {
-		fmt.Println("User not found")
+		RedString.Println("User not found")
 		data.Count = -1
 	}
 
@@ -97,10 +101,15 @@ var acCountCmd = &cobra.Command{
 
 		data := getAcCount(username)
 
-		fmt.Print("AC count:" + strconv.Itoa(data.Count))
+		if data.Count == -1 {
+			os.Exit(256)
+			return nil
+		}
+
+		fmt.Print("AC count: " + strconv.Itoa(data.Count))
 
 		if showrank {
-			fmt.Print(" Rank:" + strconv.Itoa(data.Rank))
+			fmt.Print(" Rank: " + strconv.Itoa(data.Rank) + "th")
 		}
 
 		fmt.Println()
@@ -126,16 +135,40 @@ var RatedPointSumDataCmd = &cobra.Command{
 		data := getRatedPointSum(username)
 
 		if data.Count == -1 {
+			os.Exit(256)
 			return nil
 		}
 
 		fmt.Print("Ratad Point Sum: " + strconv.Itoa(data.Count))
 
 		if showrank {
-			fmt.Print(" Rank:" + strconv.Itoa(data.Rank))
+			fmt.Print(" Rank: " + strconv.Itoa(data.Rank) + "th")
 		}
 
 		fmt.Println()
+
+		return nil
+	},
+}
+
+var aboutCmd = &cobra.Command{
+	Use:   "about",
+	Short: "Get user ratedpointsum and ac count",
+	Long:  "Get user ratedpointsum and ac count",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// TODO: アニメーションを追加する
+		username := args[0]
+
+		// AC Count
+		rootCmd.SetArgs([]string{"count", username, "-r"})
+
+		rootCmd.Execute()
+
+		// Rated Point Sum
+		rootCmd.SetArgs([]string{"rps", username, "-r"})
+
+		rootCmd.Execute()
 
 		return nil
 	},
@@ -151,6 +184,7 @@ func main() {
 func init() {
 	rootCmd.AddCommand(acCountCmd)
 	rootCmd.AddCommand(RatedPointSumDataCmd)
+	rootCmd.AddCommand(aboutCmd)
 
 	acCountCmd.Flags().BoolP("showrank", "r", false, "show ac rank")
 	RatedPointSumDataCmd.Flags().BoolP("showrank", "r", false, "show ac rank")
