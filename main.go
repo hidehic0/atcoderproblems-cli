@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -169,6 +170,8 @@ var aboutCmd = &cobra.Command{
 		rootCmd.SetArgs([]string{"count", username, "-r"})
 
 		rootCmd.Execute()
+
+		time.Sleep(1 * time.Second) // apiの規約により1秒待機
 
 		// Rated Point Sum
 		rootCmd.SetArgs([]string{"rps", username, "-r"})
