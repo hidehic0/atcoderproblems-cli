@@ -40,6 +40,35 @@ func getAcCount(username string) AcCountData {
 	return data
 }
 
+type RatedPointSumData struct {
+	Count int `json:"count"`
+	Rank  int `json:"rank"`
+}
+
+func getRatedPointSum(username string) RatedPointSumData {
+	url := "https://kenkoooo.com/atcoder/atcoder-api/v3/user/rated_point_sum_rank?user=" + username
+	res, err := http.Get(url)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var data RatedPointSumData
+	if err := json.Unmarshal(body, &data); err != nil {
+		fmt.Println("User not found")
+		data.Count = -1
+	}
+
+	return data
+}
+
 var rootCmd = &cobra.Command{
 	Use:  "example",
 	Long: "A tool that uses the atcoder problems API to use the atcoder problems function in CLI",
@@ -80,6 +109,38 @@ var acCountCmd = &cobra.Command{
 	},
 }
 
+var RatedPointSumDataCmd = &cobra.Command{
+	Use:   "rps",
+	Short: "Get rated point sum",
+	Long:  "rps <username>",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// TODO: アニメーションを追加する
+		username := args[0]
+
+		showrank, err := cmd.Flags().GetBool("showrank")
+		if err != nil {
+			return err
+		}
+
+		data := getRatedPointSum(username)
+
+		if data.Count == -1 {
+			return nil
+		}
+
+		fmt.Print("Ratad Point Sum: " + strconv.Itoa(data.Count))
+
+		if showrank {
+			fmt.Print(" Rank:" + strconv.Itoa(data.Rank))
+		}
+
+		fmt.Println()
+
+		return nil
+	},
+}
+
 func main() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -89,6 +150,8 @@ func main() {
 
 func init() {
 	rootCmd.AddCommand(acCountCmd)
+	rootCmd.AddCommand(RatedPointSumDataCmd)
 
 	acCountCmd.Flags().BoolP("showrank", "r", false, "show ac rank")
+	RatedPointSumDataCmd.Flags().BoolP("showrank", "r", false, "show ac rank")
 }
