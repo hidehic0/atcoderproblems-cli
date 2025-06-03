@@ -14,6 +14,7 @@ import (
 )
 
 var RedString = color.New(color.FgRed).Add(color.Bold)
+var GreenString = color.New(color.FgGreen).Add(color.Bold)
 
 type AcCountData struct {
 	Count int `json:"count"`
@@ -106,10 +107,12 @@ var acCountCmd = &cobra.Command{
 			return nil
 		}
 
-		fmt.Print("AC count: " + strconv.Itoa(data.Count))
+		fmt.Print("AC count: ")
+		GreenString.Print(strconv.Itoa(data.Count))
 
 		if showrank {
-			fmt.Print(" Rank: " + strconv.Itoa(data.Rank) + "th")
+			fmt.Print(" Rank: ")
+			GreenString.Print(strconv.Itoa(data.Rank) + "th")
 		}
 
 		fmt.Println()
@@ -139,10 +142,12 @@ var RatedPointSumDataCmd = &cobra.Command{
 			return nil
 		}
 
-		fmt.Print("Ratad Point Sum: " + strconv.Itoa(data.Count))
+		fmt.Print("Ratad Point Sum: ")
+		GreenString.Print(strconv.Itoa(data.Count))
 
 		if showrank {
-			fmt.Print(" Rank: " + strconv.Itoa(data.Rank) + "th")
+			fmt.Print(" Rank: ")
+			GreenString.Print(strconv.Itoa(data.Rank) + "th")
 		}
 
 		fmt.Println()
