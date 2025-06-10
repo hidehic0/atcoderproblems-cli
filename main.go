@@ -76,7 +76,7 @@ func getRatedPointSum(username string) RatedPointSumData {
 }
 
 var rootCmd = &cobra.Command{
-	Use:  "example",
+	Use:  "atcoderproblems-cli",
 	Long: "A tool that uses the atcoder problems API to use the atcoder problems function in CLI",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
