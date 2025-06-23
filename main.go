@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -182,6 +183,133 @@ var aboutCmd = &cobra.Command{
 	},
 }
 
+type ProblemData map[string]struct {
+	Slope            float64 `json:"slope"`
+	Intercept        float64 `json:"intercept"`
+	Variance         float64 `json:"variance"`
+	Difficulty       int     `json:"difficulty"`
+	Discrimination   float64 `json:"discrimination"`
+	IrtLogLikelihood float64 `json:"irt_loglikelihood"`
+	IrtUsers         int     `json:"irt_users"`
+	IsExperimental   bool    `json:"is_experimental"`
+}
+
+func getProblems() ProblemData {
+	url := "https://kenkoooo.com/atcoder/resources/problem-models.json"
+	res, err := http.Get(url)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var data ProblemData
+	if err := json.Unmarshal(body, &data); err != nil {
+		RedString.Println(err)
+	}
+
+	return data
+}
+
+type UserHistoryData []struct {
+	IsRated           bool   `json:"IsRated"`
+	Place             int    `json:"Place"`
+	OldRating         int    `json:"OldRating"`
+	NewRating         int    `json:"NewRating"`
+	Performance       int    `json:"Performance"`
+	InnerPerformance  int    `json:"InnerPerformance"`
+	ContestScreenName string `json:"ContestScreenName"`
+	ContestName       string `json:"ContestName"`
+	ContestNameEn     string `json:"ContestNameEn"`
+	EndTime           string `json:"EndTime"`
+}
+
+func getUserHistory(username string) UserHistoryData {
+	url := "https://atcoder.jp/users/" + username + "/history/json"
+	res, err := http.Get(url)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var data UserHistoryData
+	if err := json.Unmarshal(body, &data); err != nil {
+		RedString.Println("User not found")
+		os.Exit(256)
+	}
+
+	return data
+}
+
+func getCriterionPerformance(username string) int {
+	userHistory := getUserHistory(username)
+
+	if len(userHistory) == 0 {
+		RedString.Println(username + " not found" + "or " + username + " has not participated in the contest")
+		os.Exit(256)
+	}
+
+	var performances []int
+
+	for _, v := range userHistory {
+		performances = append(performances, v.Performance)
+	}
+
+	var criterion_performance int
+
+	sort.Sort(sort.Reverse(sort.IntSlice(performances)))
+
+	if len(performances) < 4 {
+		criterion_performance = performances[len(performances)-1]
+	} else {
+		criterion_performance = performances[3]
+	}
+
+	return criterion_performance
+}
+
+var recommendationCmd = &cobra.Command{
+	Use:   "recommendation",
+	Short: "git recoomendation problem",
+	Long:  "git recoomendation problem",
+	RunE: func(cmd *cobra.Command, args []string) error {
+
+		atcUsername, ok := os.LookupEnv("ATC_USERNAME")
+
+		if !ok && len(args) == 0 {
+			RedString.Println("Please set ATC_USERNAME or set username")
+			os.Exit(256)
+		}
+
+		var username string
+
+		if len(args) == 0 {
+			username = atcUsername
+		} else {
+			username = args[0]
+		}
+
+		criterionPerformance := getCriterionPerformance(username)
+
+		fmt.Printf("criterion performance is %d\n", criterionPerformance)
+
+		return nil
+	},
+}
+
 func main() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -193,6 +321,7 @@ func init() {
 	rootCmd.AddCommand(acCountCmd)
 	rootCmd.AddCommand(RatedPointSumDataCmd)
 	rootCmd.AddCommand(aboutCmd)
+	rootCmd.AddCommand(recommendationCmd)
 
 	acCountCmd.Flags().BoolP("showrank", "r", false, "show ac rank")
 	RatedPointSumDataCmd.Flags().BoolP("showrank", "r", false, "show ac rank")
