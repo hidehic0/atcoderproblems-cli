@@ -4,6 +4,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 )
@@ -33,6 +34,7 @@ func GetRatedPointSum(username string) RatedPointSumData {
 func GetProblems() ProblemData {
 	var data ProblemData
 	url := "https://kenkoooo.com/atcoder/resources/problem-models.json"
+	time.Sleep(time.Second * 1)
 	if err := fetchAPI(url, &data); err != nil {
 		RedString.Println("Failed to fetch problems")
 	}
@@ -42,6 +44,34 @@ func GetProblems() ProblemData {
 func GetProblemUrl(problemID string) string {
 	contestName := strings.Split(problemID, "_")[0]
 	return "https://atcoder.jp/contests/" + contestName + "/tasks/" + problemID
+}
+
+func GetProblemNameMap() map[string]string {
+	type ProblemNameData []struct {
+		ID    string `json:"id"`
+		Title string `json:"title"`
+	}
+
+	url := "https://kenkoooo.com/atcoder/resources/problems.json"
+
+	var data ProblemNameData
+
+	time.Sleep(time.Second * 1)
+
+	if err := fetchAPI(url, &data); err != nil {
+		RedString.Println("Failed to fetch problems")
+		os.Exit(256)
+	}
+
+	res := make(map[string]string)
+
+	for _, v := range data {
+		problemName := v.Title
+		problemName = problemName[strings.Index(problemName, " ")+1:]
+		res[v.ID] = problemName
+	}
+
+	return res
 }
 
 func GetUserHistory(username string) UserHistoryData {
